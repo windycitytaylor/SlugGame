@@ -1,14 +1,23 @@
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtCore
 import sys
 from simulation_widget import SimulationWidget
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("Cyberslug_User_Interface.ui", self)  # Load Katya’s UI file
-        # Assume your UI file has a placeholder QGraphicsView or QWidget named "graphicsView"
-        self.simulationWidget = SimulationWidget(self)
-        self.graphicsView.setWidget(self.simulationWidget)
+        self.ui = uic.loadUi("Cyberslug_User_Interface.ui", self)
+
+        # Create an instance of simulation widget
+        simWidget = SimulationWidget()
+
+        # Create a QGraphicsScene and add the simulation widget as a proxy widget
+        scene = QtWidgets.QGraphicsScene()
+        scene.addWidget(simWidget)
+
+        # Assign scene to QGraphicsView
+        self.ui.graphicsView.setScene(scene)
+
+        self.ui.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

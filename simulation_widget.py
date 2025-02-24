@@ -1,6 +1,7 @@
+# simulation_widget.py
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pygame, math, random, numpy as np
-import sluggame  # import your core simulation module
+import sluggame
 
 # Make sure Pygame is initialized (for offscreen surfaces)
 pygame.init()
@@ -9,11 +10,11 @@ class SimulationWidget(QtWidgets.QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.width, self.height = sluggame.WIDTH, sluggame.HEIGHT
+        #self.setFixedSize(self.width, self.height)
         # Create an offscreen Pygame surface for rendering
         self.surface = pygame.Surface((self.width, self.height))
         self.clock = pygame.time.Clock()
 
-        # Create simulation objects using your sluggame module
         self.cslug = sluggame.Cyberslug()
         self.prey_list = []
         for _ in range(4):
@@ -45,7 +46,7 @@ class SimulationWidget(QtWidgets.QLabel):
         # Update odor patches: let each prey deposit its odor
         for prey in self.prey_list:
             sluggame.SetPatch(prey.x, prey.y, prey.odorlist, self.patches)
-        sluggame.UpdateOdors()
+        sluggame.UpdateOdors(self.patches)
 
         # Move and draw prey onto the offscreen surface
         for prey in self.prey_list:
@@ -81,5 +82,15 @@ class SimulationWidget(QtWidgets.QLabel):
         # Convert the offscreen surface to a QImage and display it
         image_str = pygame.image.tostring(self.surface, 'RGB')
         qimage = QtGui.QImage(image_str, self.width, self.height, QtGui.QImage.Format_RGB888)
-        self.setPixmap(QtGui.QPixmap.fromImage(qimage))
+        scaled_image = qimage.scaled(self.size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        self.setPixmap(QtGui.QPixmap.fromImage(scaled_image))
         self.clock.tick(sluggame.FPS)
+
+    def resizeEvent(self, event):
+        if self.pixmap():
+            self.setPixmap(self.pixmap().scaled(self.size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+        super().resizeEvent(event)
+    
+    def sizeHint(self):
+        from PyQt5.QtCore import QSize
+        return QSize(sluggame.WIDTH, sluggame.HEIGHT)

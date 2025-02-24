@@ -4,15 +4,9 @@ import random
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-# Initialize Pygame
-pygame.init()
-
-# Set up the screen
-WIDTH, HEIGHT = 800, 800
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Cyberslug Simulation")
-
-# Define colors
+# Define simulation constants and colors
+WIDTH, HEIGHT = 600, 600 # 800, 800
+FPS = 60
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BROWN = (165, 42, 42)
@@ -20,10 +14,7 @@ CYAN = (0, 255, 255)
 PINK = (255, 105, 180)
 YELLOW = (255, 255, 0)
 
-# Set up clock for controlling frame rate
-clock = pygame.time.Clock()
-FPS = 60  # Run simulation at 60 frames per second
-
+# --- Odor Patch Environment Setup ---
 # Number of odors
 num_odor_types = 4
 
@@ -34,8 +25,7 @@ patches = np.zeros((num_odor_types, pwidth, pheight))
 # Define a scaling factor to convert screen coordinates to patch coordinates
 scale = pwidth / WIDTH # Assumes WIDTH == HEIGHT
 
-def UpdateOdors():
-    global patches
+def UpdateOdors(patches):
     for i in range(num_odor_types):
         patches[i] = gaussian_filter(patches[i], sigma=1)
         patches[i] *= 0.95
@@ -54,7 +44,7 @@ def ConvertPatchToCoord(x, y, patches):
     return px, py
 
 def Sensors(x, y, heading, patches):
-    sdist = 4 # distance (in patch units) from the cnter to sensor sample point
+    sdist = 4 # distance (in patch units) from the center to sensor sample point
     px, py = ConvertPatchToCoord(x, y, patches)
     # Calculate left and right sensor positions relative to the heading
     left_x = int(px + sdist * math.cos(math.radians(heading + 45)))
@@ -219,7 +209,7 @@ class Cyberslug:
         
         return self.turn_angle
 
-    def draw(self):
+    def draw(self, surface):
         """Draw the slug and its path trace without crossing lines."""
         # Draw the path in segments, breaking on None
         if len(self.path) > 1:
@@ -229,13 +219,13 @@ class Cyberslug:
                 if point is None:
                     # Draw the segment collected so far
                     if len(segment) > 1:
-                        pygame.draw.lines(screen, BLACK, False, segment, 2)
+                        pygame.draw.lines(surface, BLACK, False, segment, 2)
                     segment = []
                 else:
                     segment.append(point)
             # Draw any leftover segment
             if len(segment) > 1:
-                pygame.draw.lines(screen, BLACK, False, segment, 2)
+                pygame.draw.lines(surface, BLACK, False, segment, 2)
 
         # Draw the slug
         tip = (self.x + 25 * math.cos(math.radians(self.angle)),
@@ -244,7 +234,7 @@ class Cyberslug:
                 self.y - 10 * math.sin(math.radians(self.angle + 140)))
         right = (self.x - 10 * math.cos(math.radians(self.angle - 140)),
                  self.y - 10 * math.sin(math.radians(self.angle - 140)))
-        pygame.draw.polygon(screen, BROWN, [tip, left, right])
+        pygame.draw.polygon(surface, BROWN, [tip, left, right])
 
 
 class Prey:
@@ -280,79 +270,6 @@ class Prey:
         self.y = random.randint(0, HEIGHT)
         self.angle = random.uniform(0, 360)
 
-    def draw(self):
-        """Draw prey on the screen."""
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
-
-
-# --- Main Simulation Loop ---
-# Initialize the slug and prey
-cslug = Cyberslug()
-prey_list = []
-# Create prey of three types
-for _ in range(4):
-    prey_list.append(Prey(random.randint(0, WIDTH), random.randint(0, HEIGHT), CYAN, hermi_odorlist))
-for _ in range(4):
-    prey_list.append(Prey(random.randint(0, WIDTH), random.randint(0, HEIGHT), PINK, flab_odorlist))
-for _ in range(4):
-    prey_list.append(Prey(random.randint(0, WIDTH), random.randint(0, HEIGHT), YELLOW, drug_odorlist))
-
-running = True
-tick = 0
-total_ticks = 1000000
-
-while tick < total_ticks and running:
-    screen.fill(WHITE)
-    tick += 1
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    
-    # Update patches: first each prey deposits odor onto the patch
-    for prey in prey_list:
-        SetPatch(prey.x, prey.y, prey.odorlist, patches)
-    # Diffuse and decay odors
-    UpdateOdors()
-
-    # Move and draw prey
-    for prey in prey_list:
-        prey.move()
-        prey.draw()
-
-    # Slug movement logic
-    encounter = "none"
-    for prey in prey_list:
-        if math.hypot(prey.x - cslug.x, prey.y - cslug.y) < 10:  # Collision detection
-            if prey.color == CYAN:
-                encounter = "hermi"
-            elif prey.color == PINK:
-                encounter = "flab"
-            elif prey.color == YELLOW:
-                encounter = "drug"
-            prey.respawn()
-
-    # Simulate slug sensors (simplified)
-    sensors_left, sensors_right = Sensors(cslug.x, cslug.y, cslug.angle, patches)
-    # print("Sensors Left:", sensors_left, "Sensors Right:", sensors_right)  # <-- DEBUG
-    # Update the slug and capture the computed turn angle
-    turn_angle = cslug.update(sensors_left, sensors_right, encounter)
-    # Update heading based on the turn angle
-    cslug.angle -= turn_angle
-
-    # --- Path-Breaking Logic ---
-    prev_x, prev_y = cslug.x, cslug.y
-    new_x = (cslug.x + cslug.speed * math.cos(math.radians(cslug.angle))) % WIDTH
-    new_y = (cslug.y + cslug.speed * math.sin(math.radians(cslug.angle))) % HEIGHT
-    # If the distance between the new position and the previous one is large,
-    # it means we wrapped around, so insert a break in the path.
-    if abs(new_x - prev_x) > WIDTH/2 or abs(new_y - prev_y) > HEIGHT/2:
-        cslug.path.append(None)
-    cslug.x, cslug.y = new_x, new_y
-    cslug.path.append((cslug.x, cslug.y))
-
-    cslug.draw()
-    pygame.display.flip()  # Update display
-    clock.tick(FPS)  # Limit frame rate to 60 FPS
-
-pygame.quit()
+    def draw(self, surface):
+        """Draw prey on the surface."""
+        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.radius)
