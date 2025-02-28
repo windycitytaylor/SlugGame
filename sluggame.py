@@ -13,6 +13,7 @@ BROWN = (165, 42, 42)
 CYAN = (0, 255, 255)
 PINK = (255, 105, 180)
 YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
 
 # --- Odor Patch Environment Setup ---
 # Number of odors
@@ -88,6 +89,9 @@ class Cyberslug:
         self.incentive = 0.0
         self.satiation = 0.0
 
+        self.app_state = 0.0
+        self.app_state_switch = 0.0
+
         # Learning variables for prey types
         self.Vh = 0.0
         self.Vf = 0.0
@@ -115,6 +119,7 @@ class Cyberslug:
         self.sns_odors_left = [0.0] * num_odor_types
         self.sns_odors_right = [0.0] * num_odor_types
         self.sns_odors = [0.0] * num_odor_types
+        self.somatic_map = 0.0
 
     def update(self, sensors_left, sensors_right, encounter):
         # --- Process sensor readings ---
