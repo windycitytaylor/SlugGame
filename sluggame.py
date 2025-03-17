@@ -50,8 +50,6 @@ class Cyberslug:
         self.angle = 0 # degrees
         self.speed = 3
         self.path = [(self.x, self.y)]
-        # self.hitbox = pygame.Rect(self.x, self.y, 80, 80)
-        # self.hitbox.center = (self.x, self.y)
         self.image = pygame.image.load('ASIMOV_slug_sprite.png').convert_alpha()
         self.mask = pygame.mask.from_surface(self.image)
         self.mask_topleft = (self.x, self.y)

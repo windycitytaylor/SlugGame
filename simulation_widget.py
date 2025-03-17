@@ -120,14 +120,14 @@ class SimulationWidget(QtWidgets.QLabel):
             prey_topleft = (prey.x - prey.radius, prey.y - prey.radius)
             offset_x = int(prey_topleft[0] - self.cslug.mask_topleft[0])
             offset_y = int(prey_topleft[1] - self.cslug.mask_topleft[1])
-            print(f"Offset X: {offset_x}, Offset Y: {offset_y}, Prey X: {prey.x}, Prey Y: {prey.y}, Slug X: {self.cslug.x}, Slug Y: {self.cslug.y}")
+
             if self.cslug.mask.overlap(self.create_circle_mask(prey.radius), (offset_x, offset_y)):
                 encounter = self.get_encounter_type(prey)
                 prey.respawn()
         
         sensors_left, sensors_right = sensors(self.cslug.x, self.cslug.y, self.cslug.angle)
         turn_angle = self.cslug.update(sensors_left, sensors_right, encounter)
-        self.cslug.angle -= turn_angle
+        self.cslug.angle -= 2*turn_angle
     
     def get_encounter_type(self, prey):
         """Determines encounter type based on prey color."""
