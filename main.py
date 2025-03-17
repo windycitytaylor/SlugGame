@@ -1,13 +1,16 @@
 from PyQt5 import QtWidgets, uic, QtCore
 import sys
+import os
 import sluggame
 import numpy as np
 from simulation_widget import SimulationWidget
+from config import WIDTH, HEIGHT
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.ui = uic.loadUi("Cyberslug_User_Interface.ui", self)
+        UI_FILE = os.path.join(os.path.dirname(__file__), "Cyberslug_User_Interface.ui")
+        self.ui = uic.loadUi(UI_FILE, self)
 
         # Create an instance of simulation widget
         self.simWidget = SimulationWidget()
@@ -21,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.ui.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
-        self.ui.graphicsView.setFixedSize(sluggame.WIDTH, sluggame.HEIGHT)
+        self.ui.graphicsView.setFixedSize(WIDTH, HEIGHT)
 
         # Connect Buttons
         self.ui.SetupButton.clicked.connect(self.setup_simulation)
@@ -30,9 +33,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_4.clicked.connect(self.simWidget.toggle_sensors)
 
         # Connect Sliders
-        self.ui.horizontalSlider.valueChanged.connect(self.update_hermi_population)
-        self.ui.horizontalSlider_2.valueChanged.connect(self.update_flab_population)
-        self.ui.horizontalSlider_3.valueChanged.connect(self.update_fauxflab_population)
+        self.ui.horizontalSlider.valueChanged.connect(lambda value: self.update_prey_population("hermi", value))
+        self.ui.horizontalSlider_2.valueChanged.connect(lambda value: self.update_prey_population("flab", value))
+        self.ui.horizontalSlider_3.valueChanged.connect(lambda value: self.update_prey_population("fauxflab", value))
         self.ui.horizontalSlider_4.valueChanged.connect(self.update_simulation_speed)
 
         # Connect Dials
@@ -54,32 +57,27 @@ class MainWindow(QtWidgets.QMainWindow):
         """Advance the simulation by one step"""
         self.simWidget.update_simulation()
 
-    def update_hermi_population(self, value):
-        """Update the number of hermissenda prey"""
-        print(f"Hermi population set to: {value}")
-        self.simWidget.hermi_population = value
-        self.simWidget.reset_prey_population()
-        self.update_UI()
-    
-    def update_flab_population(self, value):
-        """Update flabellina population size based on slider value."""
-        print(f"Flab Population set to: {value}")
-        self.simWidget.flab_population = value
-        self.simWidget.reset_prey_population()
-        self.update_UI()
+    def update_prey_population(self, prey_type, value):
+        """Update prey population dynamically based on type."""
+        print(f"{prey_type} population set to: {value}")
 
-    def update_fauxflab_population(self, value):
-        """Update fauxflab population size based on slider value."""
-        print(f"Fauxflab Population set to: {value}")
-        self.simWidget.fauxflab_population = value
+        if prey_type == "hermi":
+            self.simWidget.hermi_population = value
+        elif prey_type == "flab":
+            self.simWidget.flab_population = value
+        elif prey_type == "fauxflab":
+            self.simWidget.fauxflab_population = value
+
         self.simWidget.reset_prey_population()
         self.update_UI()
 
     def update_simulation_speed(self, value):
         """Adjust simulation speed using the slider."""
-        print(f"Simulation speed set to: {value}")
+        self.simWidget.simulation_speed = max(1,value)
+        print(f"Simulation speed set to: {self.simWidget.simulation_speed}")
+        
         if self.simWidget.timer.isActive():
-            self.simWidget.timer.start(int(1000 / max(1, value)))
+            self.simWidget.timer.start(int(1000 / self.simWidget.simulation_speed))
 
     def update_learning_hermi(self, value):
         """Adjust hermi learning parameter."""
