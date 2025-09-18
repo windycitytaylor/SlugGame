@@ -140,7 +140,7 @@ class Cyberslug:
 
         # Apply a sigmoid to the difference between left and right sensor values modulated by the factor
         self.somatic_map_sigmoids = [
-            (l - r) / (1 + math.exp(-50 * factor))
+            (r - l) / (1 + math.exp(-50 * factor))
             for l, r, factor in zip(self.somatic_map_senses_left, self.somatic_map_senses_right, self.somatic_map_factors)
         ]
         # Somatic map is the negative sum of the sigmoid values

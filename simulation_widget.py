@@ -127,7 +127,7 @@ class SimulationWidget(QtWidgets.QLabel):
         
         sensors_left, sensors_right = sensors(self.cslug.x, self.cslug.y, self.cslug.angle)
         turn_angle = self.cslug.update(sensors_left, sensors_right, encounter)
-        self.cslug.angle -= 2*turn_angle
+        self.cslug.angle -= 2 * turn_angle
     
     def get_encounter_type(self, prey):
         """Determines encounter type based on prey color."""
@@ -154,7 +154,8 @@ class SimulationWidget(QtWidgets.QLabel):
         self.draw_cyberslug(self.surface, self.cslug)
 
         if self.show_sensors:
-            self.draw_sensors(sensors(self.cslug.x, self.cslug.y, self.cslug.angle))
+            sensors_left, sensors_right = sensors(self.cslug.x, self.cslug.y, self.cslug.angle)
+            self.draw_sensors(sensors_left, sensors_right)
 
         # Convert Pygame surface to QImage and show
         image_str = pygame.image.tostring(self.surface, 'RGB')
@@ -191,12 +192,12 @@ class SimulationWidget(QtWidgets.QLabel):
     def draw_sensors(self, sensors_left, sensors_right):
         """Draw sensor visualization on the Pygame surface."""
         left_sensor_pos = (
-            self.cslug.x + 10 * math.cos(math.radians(self.cslug.angle + 45)),
-            self.cslug.y + 10 * math.sin(math.radians(self.cslug.angle + 45))
-        )
-        right_sensor_pos = (
             self.cslug.x + 10 * math.cos(math.radians(self.cslug.angle - 45)),
             self.cslug.y + 10 * math.sin(math.radians(self.cslug.angle - 45))
+        )
+        right_sensor_pos = (
+            self.cslug.x + 10 * math.cos(math.radians(self.cslug.angle + 45)),
+            self.cslug.y + 10 * math.sin(math.radians(self.cslug.angle + 45))
         )
 
         pygame.draw.circle(self.surface, RED, (int(left_sensor_pos[0]), int(left_sensor_pos[1])), 5)
@@ -212,7 +213,7 @@ class SimulationWidget(QtWidgets.QLabel):
         return pygame.mask.from_surface(surf)
     
     def update_slug_mask(self):
-        rotated_image = pygame.transform.rotate(self.slug_image, -self.cslug.angle - 90)
+        rotated_image = pygame.transform.rotate(self.slug_image, -self.cslug.angle)
         new_rect = rotated_image.get_rect(center=(self.cslug.x, self.cslug.y))
 
         self.cslug.mask = pygame.mask.from_surface(rotated_image)
